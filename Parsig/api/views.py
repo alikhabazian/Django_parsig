@@ -7,10 +7,128 @@ import re
 import torch
 # import evaluate
 
+
+import tokenizers
+
 # import numpy as np
 import transformers
 # import matplotlib.pyplot as plt
 # from huggingface_hub import notebook_login
+
+
+map_char = {'seen': 'É',
+ 'zah': 'Ë',
+ 'backslash': 'Ì',
+ 'sheen': 'Í',
+ 'ornateleftparenthesis': 'Î',
+ 'gaf': 'Ï',
+ 'jeem': 'Ð',
+ 'w': 'Ñ',
+ 'jeh': 'Ò',
+ 'florin': 'Ó',\
+ 'z': 'Ô',
+ 'a': 'Õ',
+ 's': 'Ö',
+ 'tatweel': '×',
+ 'fathatan': 'Ø',
+ 'dad': 'Ù',
+ 'percent': 'Ú',
+ 'heh': 'Û',
+ 'cedilla': 'Ü',
+ 'sad': 'Ý',
+ 'comma': 'Þ',
+ 'x': 'ß',
+ 't': 'à',
+ 'i': 'á',
+ 'dotlessi': 'â',
+ 'qaf': 'ã',
+ 'kasratan': 'ä',
+ 'farsiyeh': 'å',
+ 'e': 'æ',
+ 'colon': 'ç',
+ 'alefwithmaddaabove': 'è',
+ 'y': 'é',
+ 'hah': 'ê',
+ 'plus': 'ë',
+ 'shadda': 'ì',
+ 'ampersand': 'í',
+ 'ydieresis': 'î',
+ 'tehmarbuta': 'ï',
+ 'underscore': 'ð',
+ 'g': 'ñ',
+ 'zero': 'ò',
+ 'yehwithhamzaabove': 'ó',
+ 'p': 'ô',
+ 'circumflex': 'õ',
+ 'd': 'ö',
+ 'k': '÷',
+ 'divide': 'ø',
+ 'khah': 'ù',
+ 'h': 'ú',
+ 'arabiccomma': 'û',
+ 'lefttoright': 'ü',
+ 'lam': 'ý',
+ 'asciicircum': 'þ',
+ 'b': 'ÿ',
+ 'beh': 'Ā',
+ 'kafisolated': 'ā',
+ 'peh': 'Ă',
+ 'at': 'ă',
+ 'ain': 'Ą',
+ 'feh': 'ą',
+ 'logicalnot': 'Ć',
+ 'zain': 'ć',
+ 'OE': 'Ĉ',
+ 'two': 'ĉ',
+ 'r': 'Ċ',
+ 'tah': 'ċ',
+ 'n': 'Č',
+ 'dollar': 'č',
+ 'tcheh': 'Ď',
+ 'numbersign': 'ď',
+ 'noon': 'Đ',
+ 'l': 'đ',
+ 'ellipsis': 'Ē',
+ 'three': 'ē',
+ 'ghain': 'Ĕ',
+ 'exclam': 'ĕ',
+ 'question': 'Ė',
+ 'bar': 'ė',
+ 'slash': 'Ę',
+ 'wawwithhamzaabove': 'ę',
+ 'm': 'Ě',
+ 'scaron': 'ě',
+ 'meem': 'Ĝ',
+ 'reh': 'ĝ',
+ 'theh': 'Ğ',
+ 'multiply': 'ğ',
+ 'u': 'Ġ',
+ 'space': ' '}
+
+
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+tokenizer_enc = transformers.AutoTokenizer.from_pretrained("omidgh/parsig_tokenizer")
+tokenizer_dec = transformers.AutoTokenizer.from_pretrained("shirzady1934/parsig_tokenizer")
+model = AutoModelForSeq2SeqLM.from_pretrained("omidgh/parsig_font2phon")
+def run(sent):
+    new_sent = []
+
+    for i in sent.split():
+        new_sent.append(map_char[i])
+    
+    sent = ''.join(new_sent)
+
+    inputs = tokenizer_enc(sent, padding="max_length", truncation=True, max_length=100, return_tensors="pt")
+    input_ids = inputs.input_ids
+    attention_mask = inputs.attention_mask
+
+    outputs = model.generate(input_ids, attention_mask=attention_mask)
+
+    output_str = tokenizer_dec.batch_decode(outputs, skip_special_tokens=True)
+
+    return output_str[0]
+
+
 
 
 tags = {'AAX',
@@ -75,4 +193,21 @@ def parsig_pos(request):
             # return Response({"status": 0, "error":str(e)})
     return render(request, 'hello.html', {'parsed_text': parsed_text})
 
+
+
+def parsig_Seq2Seq(request):
+    parsed_text=None
+    if request.method == 'POST':
+        try:
+            text =  request.POST.get('text', '')
+            if text == '':
+                pass
+                # return Response({"status": 0, "error":"can not get text"})
+            parsed_text=run(text)
+            print(parsed_text)
+            # return Response({"status": 1, "result":test_input(text)})
+        except Exception as e:
+            print(str(e))
+            # return Response({"status": 0, "error":str(e)})
+    return render(request, 'seq2seq.html', {'parsed_text': parsed_text})
 
