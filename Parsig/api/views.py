@@ -58,15 +58,21 @@ def test_input(inp):
 
 
 # Create your views here.
-@api_view([ 'POST'])
+# @api_view([ 'POST'])
 def parsig_pos(request):
+    parsed_text=None
     if request.method == 'POST':
         try:
-            text = request.data.get('text', '')
+            text =  request.POST.get('text', '')
             if text == '':
-                return Response({"status": 0, "error":"can not get text"})
-            return Response({"status": 1, "result":test_input(text)})
+                pass
+                # return Response({"status": 0, "error":"can not get text"})
+            parsed_text=test_input(text)[1:-1]
+            print(parsed_text)
+            # return Response({"status": 1, "result":test_input(text)})
         except Exception as e:
-            return Response({"status": 0, "error":str(e)})
+            print(str(e))
+            # return Response({"status": 0, "error":str(e)})
+    return render(request, 'hello.html', {'parsed_text': parsed_text})
 
 
